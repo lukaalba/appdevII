@@ -1,6 +1,9 @@
 package server;
 
-import jdk.jshell.spi.ExecutionControl;
+/**
+ * @author Jens Henning Lehmann 213172003
+ */
+
 import jdk.jshell.spi.ExecutionControl.NotImplementedException;
 
 public class Mitarbeiter {
