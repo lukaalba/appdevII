@@ -19,26 +19,4 @@ public class MariaDBConnection {
         return null;
     }
 
-    public void selectStatement(String sqlstatement, String[] parameter) {
-        try {
-            PreparedStatement ps = dbconn().prepareStatement(sqlstatement);
-            for (int i =0; i < parameter.length; i++) {
-                ps.setString(i, parameter[i]);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-
-    }
-
-    public void insertStatement(String sqlstatement, String[] parameter) {
-        try {
-            PreparedStatement ps = dbconn().prepareStatement(sqlstatement);
-            ps.setString(1, "lalalal");
-            ps.execute();
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
 }
