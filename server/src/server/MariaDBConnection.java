@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.*;
 
 public class MariaDBConnection {
     public Connection dbconn() {
@@ -11,9 +12,7 @@ public class MariaDBConnection {
             Class.forName("org.mariadb.jdbc.Driver");
             Connection conn = DriverManager.getConnection("jdbc:mariadb://localhost:3306/urlaubsplan", "root", "");
             return conn;
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        } catch (SQLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return null;

@@ -1,49 +1,69 @@
 package server;
 
 import client.FunctionalityHandler;
+
+import java.io.IOException;
+import java.io.InputStream;
 import java.rmi.server.UnicastRemoteObject;
 import java.rmi.RemoteException;
 import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 
 public class FunctionalityHandlerImpl extends UnicastRemoteObject implements FunctionalityHandler {
-
     private Mitarbeiter client;
     int mitarbeiterID;
+    String sqlstatement;
+    MariaDBConnection dbconn = new MariaDBConnection();
 
     FunctionalityHandlerImpl() throws RemoteException {
     }
 
-    public String login(int mitarbeiterID, String pwHash) throws RemoteException {
+    @Override
+    public void setmitarbeiterID(int mitarbeiterID) throws RemoteException {
+        this.mitarbeiterID = mitarbeiterID;
+    }
 
-        boolean success = true; //TODO: In der Datenbank Zugangsdaten prüfen
+    @Override
+    public boolean login(int mitarbeiterID, String pwHash) throws RemoteException {
+        boolean success = false;
+
+        sqlstatement = "SELECT MitarbeiterID, Passwort FROM Mitarbeiter WHERE Mitarbeiter.MitarbeiterID=? AND Mitarbeiter.Passwort=?";
+        try {
+            PreparedStatement ps = dbconn.dbconn().prepareStatement(sqlstatement);
+            ps.setInt(1, mitarbeiterID);
+            ps.setString(2, pwHash);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                success = true;
+            }
+            else {
+                success = false;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
 
         //TODO: client initialisieren
 
-        if (success)
-            return "Login erfolgreich!";
-        else
-            return "ID oder Passwort inkorrekt.";
+        return success;
     }
 
     @Override
     public void logout() throws RemoteException {
         //TODO: Datenbankverbindung schließen
-        System.out.println("Hallo, der RMI-Aufruf funktioniert!");
     }
 
     @Override
-    public String urlaubEintragen() throws RemoteException {
-        Date antrag_beginn;
-        Date antrag_ende;
+    public String urlaubEintragen(Date antrag_beginn, Date antrag_ende) throws RemoteException {
+        // TODO: Urlaub wird noch nicht in DB eingetragen
         int urlaub_counter = 0;
-        String sqlstatement;
         int abteilungsid = 0;
         boolean urlaubgueltig;
-        MariaDBConnection dbconn = new MariaDBConnection();
+
 
         // Eingabemöglichkeit um Urlaub einzugeben
         long milli_antrag_beginn = antrag_beginn.getTime();
@@ -83,7 +103,7 @@ public class FunctionalityHandlerImpl extends UnicastRemoteObject implements Fun
             e.printStackTrace();
         }
         if (urlaub_counter > 0) {
-            sqlstatement = "SELECT * FROM Mitarbeiter, Urlaub WHERE Mitarbeiter.ID=Urlaub.MitarbeiterID AND Mitarbeiter.ABTID =?";
+            sqlstatement = "SELECT * FROM Mitarbeiter, Urlaub WHERE Mitarbeiter.MitarbeiterID=Urlaub.MitarbeiterID AND Mitarbeiter.ABTID =?";
             try {
                 PreparedStatement ps = dbconn.dbconn().prepareStatement(sqlstatement);
                 ps.setInt(1, abteilungsid);
@@ -110,9 +130,9 @@ public class FunctionalityHandlerImpl extends UnicastRemoteObject implements Fun
             sqlstatement = "INSERT INTO Urlaub(Beginn, Ende, MitarbeiterID) VALUES(?,?,?)";
             try {
                 PreparedStatement ps = dbconn.dbconn().prepareStatement(sqlstatement);
-                ps.setDate(0, antrag_beginn);
-                ps.setDate(1, antrag_ende);
-                ps.setInt(2, mitarbeiterID);
+                ps.setDate(1, antrag_beginn);
+                ps.setDate(2, antrag_ende);
+                ps.setInt(3, mitarbeiterID);
             } catch (SQLException e) {
                 e.printStackTrace();
             }

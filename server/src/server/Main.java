@@ -16,7 +16,6 @@ public class Main {
     public static void main(String[] args) {
         try {
             FunctionalityHandlerImpl obj = new FunctionalityHandlerImpl();
-
             Registry reg;
             reg = LocateRegistry.createRegistry(port);
             String url = "rmi://localhost:" + port + "/stub";
