@@ -10,16 +10,16 @@ public class Mitarbeiter {
     private int id;
     private String name;
     private final int anzahlUrlaubstage;
-    private Abteilungsleiter abteilungsleiter;
+    private int resturlaub;
+    private int abtID;
     //private String pwHash;
-    private Kalender kalender;
 
-    public Mitarbeiter (int id, String name, int anzahlUrlaubstage, Abteilungsleiter abteilungsleiter, Kalender kalender) {
+    public Mitarbeiter (int id, String name, int anzahlUrlaubstage, int abtID) {
         this.id = id;
         this.name = name;
         this.anzahlUrlaubstage = anzahlUrlaubstage;
-        this.abteilungsleiter = abteilungsleiter;
-        this.kalender = kalender;
+        this.abtID = abtID;
+        this.resturlaub = anzahlUrlaubstage;
     }
 
     public int getId() {
@@ -34,11 +34,13 @@ public class Mitarbeiter {
         return anzahlUrlaubstage;
     }
 
-    public Abteilungsleiter getAbteilungsleiter() {
-        return abteilungsleiter;
+    public int getAbtID() { return abtID; }
+
+    public int getResturlaub() {
+        return resturlaub;
     }
 
-    public boolean urlaubBeantragen(Urlaubseintrag eintrag) throws NotImplementedException {
-        throw new NotImplementedException("kommt bald");
+    public void setResturlaub(int resturlaub) {
+        this.resturlaub = resturlaub;
     }
 }

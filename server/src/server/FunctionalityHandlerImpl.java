@@ -15,7 +15,6 @@ import java.util.concurrent.TimeUnit;
 
 public class FunctionalityHandlerImpl extends UnicastRemoteObject implements FunctionalityHandler {
     private Mitarbeiter client;
-    int mitarbeiterID;
     String sqlstatement;
     MariaDBConnection dbconn = new MariaDBConnection();
 
@@ -24,14 +23,18 @@ public class FunctionalityHandlerImpl extends UnicastRemoteObject implements Fun
 
     @Override
     public void setmitarbeiterID(int mitarbeiterID) throws RemoteException {
-        this.mitarbeiterID = mitarbeiterID;
+        //this.mitarbeiterID = mitarbeiterID;
     }
 
     @Override
     public boolean login(int mitarbeiterID, String pwHash) throws RemoteException {
         boolean success = false;
+        String name = null;
+        int anzUrlaubstage = 0;
+        int abtID = 0;
 
-        sqlstatement = "SELECT MitarbeiterID, Passwort FROM Mitarbeiter WHERE Mitarbeiter.MitarbeiterID=? AND Mitarbeiter.Passwort=?";
+
+        sqlstatement = "SELECT Vorname, Nachname, GesamtUrlaubstage, ABTID FROM Mitarbeiter WHERE Mitarbeiter.MitarbeiterID=? AND Mitarbeiter.Passwort=?";
         try {
             PreparedStatement ps = dbconn.dbconn().prepareStatement(sqlstatement);
             ps.setInt(1, mitarbeiterID);
@@ -39,6 +42,10 @@ public class FunctionalityHandlerImpl extends UnicastRemoteObject implements Fun
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
                 success = true;
+                name = String.format("%s %s", rs.getString("Vorname"), rs.getString("Nachname"));
+                anzUrlaubstage = rs.getInt("GesamtUrlaubstage");
+                abtID = rs.getInt("ABTID");
+
             }
             else {
                 success = false;
@@ -47,7 +54,20 @@ public class FunctionalityHandlerImpl extends UnicastRemoteObject implements Fun
             e.printStackTrace();
         }
 
-        //TODO: client initialisieren
+        if (success) {
+            sqlstatement = "SELECT 1 FROM Abteilung WHERE Abteilung.AL=?";
+            try {
+                PreparedStatement ps = dbconn.dbconn().prepareStatement(sqlstatement);
+                ps.setInt(1, mitarbeiterID);
+                ResultSet rs = ps.executeQuery();
+                if (rs.next())
+                    client = new Abteilungsleiter(mitarbeiterID, name, anzUrlaubstage, abtID);
+                else
+                    client = new Mitarbeiter(mitarbeiterID, name, anzUrlaubstage, abtID);
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
 
         return success;
     }
@@ -59,10 +79,7 @@ public class FunctionalityHandlerImpl extends UnicastRemoteObject implements Fun
 
     @Override
     public String urlaubEintragen(Date antrag_beginn, Date antrag_ende) throws RemoteException {
-        int urlaub_counter = 0;
-        int abteilungsid = 0;
         boolean urlaubgueltig = false;
-
 
         // Eingabemöglichkeit um Urlaub einzugeben
         long milli_antrag_beginn = antrag_beginn.getTime();
@@ -73,25 +90,11 @@ public class FunctionalityHandlerImpl extends UnicastRemoteObject implements Fun
         int diff_eingabeInt = Math.toIntExact(diff_eingabe);
 
 
-        // Abrufen der Anzahl der Urlaubstage
-        sqlstatement = "SELECT gesamtUrlaubstage, ABTID FROM Mitarbeiter WHERE MitarbeiterID=?";
-        try {
-            PreparedStatement ps = dbconn.dbconn().prepareStatement(sqlstatement);
-            ps.setInt(1, mitarbeiterID);
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) {
-                urlaub_counter = rs.getInt("gesamtUrlaubstage");
-                abteilungsid = rs.getInt("ABTID");
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-
         // Überprüfung, wie viel Urlaub bereits genommen wurde
         sqlstatement = "SELECT * FROM Urlaub WHERE Urlaub.MitarbeiterID=?";
         try {
             PreparedStatement ps = dbconn.dbconn().prepareStatement(sqlstatement);
-            ps.setInt(1, mitarbeiterID);
+            ps.setInt(1, client.getId());
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
                 Date beginn = rs.getDate("Urlaub.Beginn");
@@ -99,29 +102,30 @@ public class FunctionalityHandlerImpl extends UnicastRemoteObject implements Fun
                 long diffInMillies = Math.abs(ende.getTime() - beginn.getTime());
                 long diff = TimeUnit.DAYS.convert(diffInMillies, TimeUnit.MILLISECONDS);
                 int intdiff = Math.toIntExact(diff);
-                urlaub_counter = urlaub_counter - intdiff;
+                client.setResturlaub(client.getResturlaub() - intdiff);
 
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        if (urlaub_counter > diff_eingabeInt) {
+
+        //Überprüfung, ob Vertretung vorhanden
+        if (client.getResturlaub() > diff_eingabeInt) {
             sqlstatement = "SELECT * FROM Mitarbeiter, Urlaub WHERE Mitarbeiter.MitarbeiterID=Urlaub.MitarbeiterID AND Mitarbeiter.ABTID =?";
             try {
+                System.out.println("AbtID: " + client.getAbtID());
                 PreparedStatement ps = dbconn.dbconn().prepareStatement(sqlstatement);
-                ps.setInt(1, abteilungsid);
+                ps.setInt(1, client.getAbtID());
                 ResultSet rs = ps.executeQuery();
                 while (rs.next()) {
+                    System.out.println("rs geht");
                     Date beginn = rs.getDate("Beginn");
                     long milli_beginn = beginn.getTime();
                     Date ende = rs.getDate("Ende");
                     long milli_ende = ende.getTime();
-                    System.out.println("Milli_ende:" + (milli_ende - milli_beginn));
-                    System.out.println("Milli_beginn: " + milli_beginn);
-                    System.out.println("Milli_antrag_beginn: " + milli_antrag_beginn);
-                    System.out.println("Milli_antrag_ende " + milli_antrag_ende);
-                    if (milli_ende < milli_antrag_beginn && milli_beginn > milli_antrag_ende) {
-                        System.out.println("Vertretung gefunden: " + rs.getString("Name"));
+                    if (milli_ende < milli_antrag_beginn && milli_beginn > milli_antrag_ende) { //TODO: Vertretungsregelung reparieren
+                        System.out.println("if geht");
+                        System.out.println("Vertretung gefunden: " + rs.getString("Nachname"));
                         urlaubgueltig = true;
                         break;
                     }
@@ -133,19 +137,21 @@ public class FunctionalityHandlerImpl extends UnicastRemoteObject implements Fun
         else {
             return ("Der diesjährige Urlaub wurde leider schon aufgebraucht");
         }
-        if (urlaubgueltig) {
-            sqlstatement = "INSERT INTO Urlaub(Beginn, Ende, MitarbeiterID) VALUES(?,?,?)";
+        // Urlaub in DB eintragen
+        if (!urlaubgueltig) {
+            return "Keine Vertretung vorhanden!";
+        } else {
+            sqlstatement = "INSERT INTO Urlaub(Beginn, Ende, MitarbeiterID, Genehmigt) VALUES(?,?,?,?)";
             try {
                 PreparedStatement ps = dbconn.dbconn().prepareStatement(sqlstatement);
                 ps.setDate(1, antrag_beginn);
                 ps.setDate(2, antrag_ende);
-                ps.setInt(3, mitarbeiterID);
+                ps.setInt(3, client.getId());
+                ps.setBoolean(4, false);
                 ps.execute();
             } catch (SQLException e) {
                 e.printStackTrace();
             }
-        } else {
-            return "Keine Vertretung vorhanden!";
         }
         return "Urlaub beantragt!";
     }
@@ -159,4 +165,6 @@ public class FunctionalityHandlerImpl extends UnicastRemoteObject implements Fun
 
         return null;
     }
+
+
 }

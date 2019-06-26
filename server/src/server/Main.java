@@ -12,7 +12,7 @@ import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 
 public class Main {
-    private static int port = 1666;
+    private final static int port = 1666;
     public static void main(String[] args) {
         try {
             FunctionalityHandlerImpl obj = new FunctionalityHandlerImpl();
