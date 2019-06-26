@@ -1,5 +1,9 @@
 package client;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
@@ -24,39 +28,51 @@ public class Main {
             boolean success = false;
 
             FunctionalityHandler stub = (FunctionalityHandler) Naming.lookup("rmi://localhost:1666/stub");
-            Scanner eingabe = new Scanner(System.in).useDelimiter("\\n");
+            InputStream in = System.in;
+            InputStreamReader inReader = new InputStreamReader(in);
+            BufferedReader input = new BufferedReader(inReader);
 
             for (int i =0; i < 3; i++) {
                 System.out.println("Login: ");
-                id = eingabe.nextInt();
-                stub.setmitarbeiterID(id);
-                System.out.println("Passwort: ");
-                password = eingabe.next();
-                if (stub.login(id, password)) {
-                    System.out.println("Login erfolgreich!");
-                    System.out.println("Was möchten Sie machen?");
-                    System.out.println("1: Urlaub beantragen");
-                    System.out.println("2: Urlaub genehmigen");
-                    System.out.println("3: Beenden");
-                    wahl = eingabe.nextInt();
-                    success = true;
-                    break;
+                try {
+                    id = Integer.parseInt(input.readLine());
+                    System.out.println("Passwort: ");
+                    password = input.readLine();
+                    if (stub.login(id, password)) {
+                        System.out.println("Login erfolgreich!");
+                        System.out.println("Was möchten Sie machen?");
+                        System.out.println("1: Urlaub beantragen");
+                        System.out.println("2: Urlaub genehmigen");
+                        System.out.println("3: Beenden");
+                        wahl = Integer.parseInt(input.readLine());
+                        success = true;
+                        break;
 
+                    }
+                    else {
+                        System.out.println("Falsche MitarbeiterID oder falsches Passwort");
+                    }
+                } catch (IOException ioe) {
+                    ioe.printStackTrace();
                 }
-                else {
-                    System.out.println("Falsche MitarbeiterID oder falsches Passwort");
-                }
+
+
             }
 
             if (success) {
                 switch(wahl) {
                     case 1:
-                        System.out.println("Beginn des Urlaubs (Format YYYY-MM-DD): ");
-                        beginn = Date.valueOf(eingabe.next());
-                        System.out.println("Ende des Urlaubs: (Format YYYY-MM-DD): ");
-                        ende = Date.valueOf(eingabe.next());
-                        System.out.println(stub.urlaubEintragen(beginn, ende));
-                        break;
+                        try {
+                            System.out.println("Beginn des Urlaubs (Format YYYY-MM-DD): ");
+                            beginn = Date.valueOf(input.readLine());
+                            System.out.println("Ende des Urlaubs: (Format YYYY-MM-DD): ");
+                            ende = Date.valueOf(input.readLine());
+                            System.out.println(stub.urlaubEintragen(beginn, ende));
+                            break;
+                        } catch (IOException ioe) {
+                            ioe.printStackTrace();
+                        }
+
                     case 2:
                         stub.urlaubGenehmigen(1); //TODO: Urlaub genehmigen implementieren
                         break;

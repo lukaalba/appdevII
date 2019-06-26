@@ -22,11 +22,6 @@ public class FunctionalityHandlerImpl extends UnicastRemoteObject implements Fun
     }
 
     @Override
-    public void setmitarbeiterID(int mitarbeiterID) throws RemoteException {
-        //this.mitarbeiterID = mitarbeiterID;
-    }
-
-    @Override
     public boolean login(int mitarbeiterID, String pwHash) throws RemoteException {
         boolean success = false;
         String name = null;
