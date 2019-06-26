@@ -66,7 +66,7 @@ public class Main {
         } catch (NotBoundException e) {
             e.printStackTrace();
         } catch (MalformedURLException e) {
-            //e.printStackTrace();
+            e.printStackTrace();
         }
     }
 }
