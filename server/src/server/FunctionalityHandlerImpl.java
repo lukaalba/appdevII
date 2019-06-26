@@ -79,7 +79,10 @@ public class FunctionalityHandlerImpl extends UnicastRemoteObject implements Fun
 
     @Override
     public String urlaubEintragen(Date antrag_beginn, Date antrag_ende) throws RemoteException {
+        String message = null;
         boolean urlaubgueltig = false;
+        long milli_ende;
+        long milli_beginn;
 
         // Eingabemöglichkeit um Urlaub einzugeben
         long milli_antrag_beginn = antrag_beginn.getTime();
@@ -111,21 +114,28 @@ public class FunctionalityHandlerImpl extends UnicastRemoteObject implements Fun
 
         //Überprüfung, ob Vertretung vorhanden
         if (client.getResturlaub() > diff_eingabeInt) {
-            sqlstatement = "SELECT * FROM Mitarbeiter, Urlaub WHERE Mitarbeiter.MitarbeiterID=Urlaub.MitarbeiterID AND Mitarbeiter.ABTID =?";
+            sqlstatement = "SELECT * FROM Mitarbeiter LEFT JOIN Urlaub ON Mitarbeiter.MitarbeiterID = Urlaub.MitarbeiterID WHERE Mitarbeiter.ABTID=? AND NOT Mitarbeiter.MitarbeiterID =?";
             try {
-                System.out.println("AbtID: " + client.getAbtID());
                 PreparedStatement ps = dbconn.dbconn().prepareStatement(sqlstatement);
                 ps.setInt(1, client.getAbtID());
+                ps.setInt(2, client.getId());
                 ResultSet rs = ps.executeQuery();
+
                 while (rs.next()) {
-                    System.out.println("rs geht");
+
+                    milli_beginn = 0;
+                    milli_ende = 0;
                     Date beginn = rs.getDate("Beginn");
-                    long milli_beginn = beginn.getTime();
+                    if (beginn != null) {
+                        milli_beginn = beginn.getTime();
+                    }
                     Date ende = rs.getDate("Ende");
-                    long milli_ende = ende.getTime();
-                    if (milli_ende < milli_antrag_beginn && milli_beginn > milli_antrag_ende) { //TODO: Vertretungsregelung reparieren
-                        System.out.println("if geht");
-                        System.out.println("Vertretung gefunden: " + rs.getString("Nachname"));
+                    if (ende != null) {
+                        milli_ende = ende.getTime();
+                    }
+
+                    if (milli_ende == 0 || milli_beginn == 0 || (milli_ende < milli_antrag_beginn && milli_beginn > milli_antrag_ende)) {
+                        message = "Die Vertretung ist: " + rs.getString("Nachname");
                         urlaubgueltig = true;
                         break;
                     }
@@ -135,11 +145,13 @@ public class FunctionalityHandlerImpl extends UnicastRemoteObject implements Fun
             }
         }
         else {
-            return ("Der diesjährige Urlaub wurde leider schon aufgebraucht");
+            message = "Der diesjährige Urlaub wurde leider schon aufgebraucht";
+            return message;
         }
         // Urlaub in DB eintragen
         if (!urlaubgueltig) {
-            return "Keine Vertretung vorhanden!";
+            message = "Keine Vertretung vorhanden!";
+            return message;
         } else {
             sqlstatement = "INSERT INTO Urlaub(Beginn, Ende, MitarbeiterID, Genehmigt) VALUES(?,?,?,?)";
             try {
@@ -153,7 +165,8 @@ public class FunctionalityHandlerImpl extends UnicastRemoteObject implements Fun
                 e.printStackTrace();
             }
         }
-        return "Urlaub beantragt!";
+        message = "Urlaub beantragt! " + message;
+        return message;
     }
 
     @Override

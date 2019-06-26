@@ -21,44 +21,52 @@ public class Main {
         try {
             //TODO: Passwort hashen
             int wahl = 0;
+            boolean success = false;
 
             FunctionalityHandler stub = (FunctionalityHandler) Naming.lookup("rmi://localhost:1666/stub");
             Scanner eingabe = new Scanner(System.in).useDelimiter("\\n");
-            System.out.println("Login: ");
-            id = eingabe.nextInt();
-            stub.setmitarbeiterID(id);
-            System.out.println("Passwort: ");
-            password = eingabe.next();
-            if (stub.login(id, password)) {
-                System.out.println("Login erfolgreich!");
-                System.out.println("Was möchten Sie machen?");
-                System.out.println("1: Urlaub beantragen");
-                System.out.println("2: Urlaub genehmigen");
-                System.out.println("3: Beenden");
-                wahl = eingabe.nextInt();
+
+            for (int i =0; i < 3; i++) {
+                System.out.println("Login: ");
+                id = eingabe.nextInt();
+                stub.setmitarbeiterID(id);
+                System.out.println("Passwort: ");
+                password = eingabe.next();
+                if (stub.login(id, password)) {
+                    System.out.println("Login erfolgreich!");
+                    System.out.println("Was möchten Sie machen?");
+                    System.out.println("1: Urlaub beantragen");
+                    System.out.println("2: Urlaub genehmigen");
+                    System.out.println("3: Beenden");
+                    wahl = eingabe.nextInt();
+                    success = true;
+                    break;
+
+                }
+                else {
+                    System.out.println("Falsche MitarbeiterID oder falsches Passwort");
+                }
             }
-            else {
-                System.exit(0);
-            }
-            switch(wahl) {
-                case 1: System.out.println("Beginn des Urlaubs (Format YYYY-MM-DD): ");
+
+            if (success) {
+                switch(wahl) {
+                    case 1:
+                        System.out.println("Beginn des Urlaubs (Format YYYY-MM-DD): ");
                         beginn = Date.valueOf(eingabe.next());
                         System.out.println("Ende des Urlaubs: (Format YYYY-MM-DD): ");
                         ende = Date.valueOf(eingabe.next());
                         System.out.println(stub.urlaubEintragen(beginn, ende));
                         break;
-                case 2: stub.urlaubGenehmigen(1); //TODO: Urlaub genehmigen implementieren
+                    case 2:
+                        stub.urlaubGenehmigen(1); //TODO: Urlaub genehmigen implementieren
                         break;
-                case 3: System.exit(0);
+                    case 3:
+                        System.exit(0);
+                }
             }
-
-
-
-
-//            Registry registry = LocateRegistry.getRegistry(null);
-
-//            FunctionalityHandler handerStub = (FunctionalityHandler) registry.lookup("FunctionalityHandler");
-
+            else {
+                System.exit(403);
+            }
 
 
         } catch (RemoteException e) {
