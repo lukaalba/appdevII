@@ -1,6 +1,6 @@
-package server;
+package src.server;
 
-import client.FunctionalityHandler;
+import src.client.FunctionalityHandler;
 
 import java.io.IOException;
 import java.io.InputStream;

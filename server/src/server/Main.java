@@ -1,7 +1,7 @@
-package server;
+package src.server;
 
 
-import client.FunctionalityHandler;
+import src.client.FunctionalityHandler;
 
 import java.net.MalformedURLException;
 import java.rmi.AlreadyBoundException;
