@@ -1,7 +1,7 @@
 package server;
 
 import client.FunctionalityHandler;
-
+import java.sql.Connection;
 import java.io.IOException;
 import java.io.InputStream;
 import java.rmi.server.UnicastRemoteObject;
@@ -10,13 +10,15 @@ import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 
 public class FunctionalityHandlerImpl extends UnicastRemoteObject implements FunctionalityHandler {
     private Mitarbeiter client;
+    PreparedStatement ps = null;
     String sqlstatement;
     MariaDBConnection dbconn = new MariaDBConnection();
+    Connection connection;
+
 
     FunctionalityHandlerImpl() throws RemoteException {
     }
@@ -29,18 +31,21 @@ public class FunctionalityHandlerImpl extends UnicastRemoteObject implements Fun
         int abtID = 0;
 
 
+
+
         sqlstatement = "SELECT Vorname, Nachname, GesamtUrlaubstage, ABTID FROM Mitarbeiter WHERE Mitarbeiter.MitarbeiterID=? AND Mitarbeiter.Passwort=?";
         try {
-            PreparedStatement ps = dbconn.dbconn().prepareStatement(sqlstatement);
+            connection = dbconn.dbconn();
+            ps = connection.prepareStatement(sqlstatement);
             ps.setInt(1, mitarbeiterID);
             ps.setString(2, pwHash);
             ResultSet rs = ps.executeQuery();
+            System.out.println("Nach der Query");
             if (rs.next()) {
                 success = true;
                 name = String.format("%s %s", rs.getString("Vorname"), rs.getString("Nachname"));
                 anzUrlaubstage = rs.getInt("GesamtUrlaubstage");
                 abtID = rs.getInt("ABTID");
-
             }
             else {
                 success = false;
@@ -52,7 +57,7 @@ public class FunctionalityHandlerImpl extends UnicastRemoteObject implements Fun
         if (success) {
             sqlstatement = "SELECT 1 FROM Abteilung WHERE Abteilung.AL=?";
             try {
-                PreparedStatement ps = dbconn.dbconn().prepareStatement(sqlstatement);
+                ps = connection.prepareStatement(sqlstatement);
                 ps.setInt(1, mitarbeiterID);
                 ResultSet rs = ps.executeQuery();
                 if (rs.next())
@@ -91,7 +96,7 @@ public class FunctionalityHandlerImpl extends UnicastRemoteObject implements Fun
         // Überprüfung, wie viel Urlaub bereits genommen wurde
         sqlstatement = "SELECT * FROM Urlaub WHERE Urlaub.MitarbeiterID=?";
         try {
-            PreparedStatement ps = dbconn.dbconn().prepareStatement(sqlstatement);
+            ps = connection.prepareStatement(sqlstatement);
             ps.setInt(1, client.getId());
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
@@ -111,7 +116,7 @@ public class FunctionalityHandlerImpl extends UnicastRemoteObject implements Fun
         if (client.getResturlaub() > diff_eingabeInt) {
             sqlstatement = "SELECT * FROM Mitarbeiter LEFT JOIN Urlaub ON Mitarbeiter.MitarbeiterID = Urlaub.MitarbeiterID WHERE Mitarbeiter.ABTID=? AND NOT Mitarbeiter.MitarbeiterID =?";
             try {
-                PreparedStatement ps = dbconn.dbconn().prepareStatement(sqlstatement);
+                ps = connection.prepareStatement(sqlstatement);
                 ps.setInt(1, client.getAbtID());
                 ps.setInt(2, client.getId());
                 ResultSet rs = ps.executeQuery();
@@ -148,7 +153,7 @@ public class FunctionalityHandlerImpl extends UnicastRemoteObject implements Fun
             message = "Keine Vertretung vorhanden!";
             sqlstatement = "INSERT INTO Urlaub(Beginn, Ende, MitarbeiterID, Genehmigt) VALUES(?,?,?,?)";
             try {
-                PreparedStatement ps = dbconn.dbconn().prepareStatement(sqlstatement);
+                ps = connection.prepareStatement(sqlstatement);
                 ps.setDate(1, antrag_beginn);
                 ps.setDate(2, antrag_ende);
                 ps.setInt(3, client.getId());
@@ -160,7 +165,7 @@ public class FunctionalityHandlerImpl extends UnicastRemoteObject implements Fun
         } else {
             sqlstatement = "INSERT INTO Urlaub(Beginn, Ende, MitarbeiterID, Genehmigt) VALUES(?,?,?,?)";
             try {
-                PreparedStatement ps = dbconn.dbconn().prepareStatement(sqlstatement);
+                ps = connection.prepareStatement(sqlstatement);
                 ps.setDate(1, antrag_beginn);
                 ps.setDate(2, antrag_ende);
                 ps.setInt(3, client.getId());
@@ -171,8 +176,9 @@ public class FunctionalityHandlerImpl extends UnicastRemoteObject implements Fun
                 e.printStackTrace();
             }
         }
-
+        dbconn.closeCon();
         return message;
+
     }
 
     @Override

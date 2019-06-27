@@ -28,6 +28,7 @@ public class Main {
             boolean success = false;
 
             FunctionalityHandler stub = (FunctionalityHandler) Naming.lookup("rmi://localhost:1666/stub");
+
             InputStream in = System.in;
             InputStreamReader inReader = new InputStreamReader(in);
             BufferedReader input = new BufferedReader(inReader);
