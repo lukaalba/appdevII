@@ -1,15 +1,10 @@
 package server;
 
 import client.FunctionalityHandler;
-import java.sql.Connection;
-import java.io.IOException;
-import java.io.InputStream;
-import java.rmi.server.UnicastRemoteObject;
+
 import java.rmi.RemoteException;
-import java.sql.Date;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.rmi.server.UnicastRemoteObject;
+import java.sql.*;
 import java.util.concurrent.TimeUnit;
 
 public class FunctionalityHandlerImpl extends UnicastRemoteObject implements FunctionalityHandler {
@@ -182,12 +177,70 @@ public class FunctionalityHandlerImpl extends UnicastRemoteObject implements Fun
     }
 
     @Override
-    public String urlaubGenehmigen(int urlaubsID) throws RemoteException {
+    public String urlaubGenehmigen(int mitarbeiterId, Date begin, Date ende) throws RemoteException {
         if (client instanceof Abteilungsleiter) {
             //TODO: Auf der Datenbank den entsprechenden Urlaub als genehmigt markieren
+            sqlstatement="UPDATE urlaub SET Genehmigt=1 WHERE MitarbeiterID=? AND Beginn=? AND Ende=?";
+            try {
+                ps = connection.prepareStatement(sqlstatement);
+                ps.setInt(1,mitarbeiterId);
+                ps.setDate(2,begin);
+                ps.setDate(3,ende);
+                boolean worked = ps.execute();
+                if(worked){
+                    return "Urlaub wurde genehmigt!";
+                }
+                else
+                    return "Urlaub wurde aufgrund eines Fehlers nicht genehmigt";
+            }
+            catch (Exception e){
+                e.printStackTrace();
+            }
+
         }
         else throw new RemoteException();
 
+        return null;
+    }
+
+    @Override
+    public ResultSet getNichtGenehmigteUrlaubsTage(int mitarbeiterId) throws RemoteException {
+        if (client instanceof Abteilungsleiter) {
+            ResultSet set = null;
+            sqlstatement = "SELECT * FROM Urlaub WHERE Urlaub.MitarbeiterID IN (Select mitarbeiter.MitarbeiterID from mitarbeiter where mitarbeiter.ABTID=? AND mitarbeiter.MitarbeiterID=?) AND urlaub.Genehmigt=0";
+            try {
+                ps = connection.prepareStatement(sqlstatement);
+                ps.setInt(1, client.getAbtID());
+                ps.setInt(2, mitarbeiterId);
+                set = ps.executeQuery();
+                return set;
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+        }
+        return null;
+    }
+
+    @Override
+    public String urlaubLoeschen(int mitarbeiterId, Date begin, Date ende) throws RemoteException {
+        if (client instanceof Abteilungsleiter) {
+            sqlstatement = "DELETE FROM urlaub WHERE MitarbeiterID=? AND Beginn=? AND ENDE=?";
+            try {
+                ps = connection.prepareStatement(sqlstatement);
+                ps.setInt(1, mitarbeiterId);
+                ps.setDate(2, begin);
+                ps.setDate(3, ende);
+                boolean worked = ps.execute();
+                if (worked) {
+                    return "Urlaubssatz wurde gelöscht";
+                } else
+                    return "Urlaubssatz wurde aufgrund eines Fehlers nicht gelöscht";
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
         return null;
     }
 

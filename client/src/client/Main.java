@@ -8,13 +8,9 @@ import java.net.MalformedURLException;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
-import java.rmi.registry.LocateRegistry;
-import java.rmi.registry.Registry;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 import java.sql.Date;
-import java.util.Scanner;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 public class Main {
     private static int id;
@@ -75,8 +71,48 @@ public class Main {
                         }
 
                     case 2:
-                        stub.urlaubGenehmigen(1); //TODO: Urlaub genehmigen implementieren
-                        break;
+                        try {
+                            System.out.println("Urlaub genehmigen gewählt!");
+                            System.out.println("Bitte geben Sie die Mitarbeiternummer der Person ein, dessen Urlaub sie genehmigen wollen");
+                            int personalnr = Integer.parseInt(input.readLine());
+                            ResultSet rset = stub.getNichtGenehmigteUrlaubsTage(personalnr);
+                            boolean running= true;
+                            if (rset!= null){
+                                while (rset.next() && running){
+                                    System.out.println("Der Mitarbeiter möchte von "+rset.getDate("Beginn")+" bis "+rset.getDate("Ende")+" freinehmen");
+                                    System.out.println("Möchten Sie diesen genehmigen? (J/N/S). Drücken sie E u um die Abfrage zu verlassen!");
+                                    String antwort = input.readLine();
+                                    switch (antwort){
+                                        case "J":
+                                            System.out.println(stub.urlaubGenehmigen(rset.getInt("MitarbeiterID"),rset.getDate("Beginn"),rset.getDate("Ende")));
+                                            break;
+                                        case "N":
+                                            System.out.println(stub.urlaubLoeschen(rset.getInt("MitarbeiterID"),rset.getDate("Beginn"),rset.getDate("Ende")));
+                                            break;
+                                        case "S":
+                                            break;
+                                        case "E":
+                                            running=false;
+                                            break;
+                                        default:
+                                            System.out.println("Nicht korrekte Taste eingegeben");
+                                            break;
+                                    }
+
+
+                                }
+                            }
+                            else
+                                System.out.println("Der Mitarbeiter mit der Nr: "+personalnr+" hat keine nicht genehmigten Urlaubstage!");
+                            break;
+
+                        } catch (IOException ioe){
+                            ioe.printStackTrace();
+                        }
+                          catch (SQLException sqle){
+                            sqle.printStackTrace();
+                        }
+
                     case 3:
                         System.exit(0);
                 }
