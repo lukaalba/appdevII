@@ -1,4 +1,4 @@
-package src.server;
+package server;
 
 /**
  * @author Jens Henning Lehmann 213172003

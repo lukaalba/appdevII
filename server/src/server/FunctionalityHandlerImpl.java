@@ -1,6 +1,6 @@
-package src.server;
+package server;
 
-import src.client.FunctionalityHandler;
+import client.FunctionalityHandler;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -146,8 +146,6 @@ public class FunctionalityHandlerImpl extends UnicastRemoteObject implements Fun
         // Urlaub in DB eintragen
         if (!urlaubgueltig) {
             message = "Keine Vertretung vorhanden!";
-            return message;
-        } else {
             sqlstatement = "INSERT INTO Urlaub(Beginn, Ende, MitarbeiterID, Genehmigt) VALUES(?,?,?,?)";
             try {
                 PreparedStatement ps = dbconn.dbconn().prepareStatement(sqlstatement);
@@ -159,8 +157,21 @@ public class FunctionalityHandlerImpl extends UnicastRemoteObject implements Fun
             } catch (SQLException e) {
                 e.printStackTrace();
             }
+        } else {
+            sqlstatement = "INSERT INTO Urlaub(Beginn, Ende, MitarbeiterID, Genehmigt) VALUES(?,?,?,?)";
+            try {
+                PreparedStatement ps = dbconn.dbconn().prepareStatement(sqlstatement);
+                ps.setDate(1, antrag_beginn);
+                ps.setDate(2, antrag_ende);
+                ps.setInt(3, client.getId());
+                ps.setBoolean(4, true);
+                ps.execute();
+                message = "Urlaub beantragt! " + message;
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
         }
-        message = "Urlaub beantragt! " + message;
+
         return message;
     }
 

@@ -1,7 +1,4 @@
-package src.server;
-
-
-import src.client.FunctionalityHandler;
+package server;
 
 import java.net.MalformedURLException;
 import java.rmi.AlreadyBoundException;
@@ -9,7 +6,6 @@ import java.rmi.Naming;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
-import java.rmi.server.UnicastRemoteObject;
 
 public class Main {
     private final static int port = 1666;
@@ -22,11 +18,6 @@ public class Main {
             System.out.println("Dienst erreichbar unter: " + url);
             Naming.bind(url, obj);
 
-//            FunctionalityHandler stub = (FunctionalityHandler) UnicastRemoteObject.exportObject(obj, port);
-
-//            Registry registry = LocateRegistry.getRegistry();
-
-//            registry.bind("FunctionalityHandler", stub);
             System.out.println("Server steht bereit.");
         } catch (RemoteException e) {
             e.printStackTrace();
