@@ -2,7 +2,6 @@ package client;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.rmi.Naming;
@@ -17,17 +16,20 @@ public class Main {
     private static String password;
     private static Date beginn;
     private static Date ende;
+    private static final String host = "localhost";
+    private static final int port = 1666;
+
     public static void main(String[] args) {
         try {
             //TODO: Passwort hashen
             int wahl = 0;
             boolean success = false;
 
-            FunctionalityHandler stub = (FunctionalityHandler) Naming.lookup("rmi://localhost:1666/stub");
+            FunctionalityHandler stub = (FunctionalityHandler) Naming.lookup(String.format("rmi://%s:%d/stub", host, port));
+            stub.connect();
+            Thread infoStreamPrinter = new InfoStreamPrinter(host, port);
 
-            InputStream in = System.in;
-            InputStreamReader inReader = new InputStreamReader(in);
-            BufferedReader input = new BufferedReader(inReader);
+            BufferedReader input = new BufferedReader(new InputStreamReader(System.in));
 
             for (int i =0; i < 3; i++) {
                 System.out.println("Login: ");

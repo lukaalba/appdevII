@@ -18,7 +18,7 @@ public class Main {
             System.out.println("Dienst erreichbar unter: " + url);
             Naming.bind(url, obj);
 
-            System.out.println("Server steht bereit.");
+            System.out.println("Server steht bereit. Erwarte Verbindung...");
         } catch (RemoteException e) {
             e.printStackTrace();
         } catch (AlreadyBoundException e) {

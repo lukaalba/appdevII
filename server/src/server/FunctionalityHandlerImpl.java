@@ -13,9 +13,13 @@ public class FunctionalityHandlerImpl extends UnicastRemoteObject implements Fun
     String sqlstatement;
     MariaDBConnection dbconn = new MariaDBConnection();
     Connection connection;
+    InfoStreamer infoStreamer = null;
 
+    FunctionalityHandlerImpl() throws RemoteException { }
 
-    FunctionalityHandlerImpl() throws RemoteException {
+    @Override
+    public void connect() {
+        infoStreamer = new InfoStreamer(1666);
     }
 
     @Override
@@ -24,9 +28,6 @@ public class FunctionalityHandlerImpl extends UnicastRemoteObject implements Fun
         String name = null;
         int anzUrlaubstage = 0;
         int abtID = 0;
-
-
-
 
         sqlstatement = "SELECT Vorname, Nachname, GesamtUrlaubstage, ABTID FROM Mitarbeiter WHERE Mitarbeiter.MitarbeiterID=? AND Mitarbeiter.Passwort=?";
         try {
@@ -41,6 +42,7 @@ public class FunctionalityHandlerImpl extends UnicastRemoteObject implements Fun
                 name = String.format("%s %s", rs.getString("Vorname"), rs.getString("Nachname"));
                 anzUrlaubstage = rs.getInt("GesamtUrlaubstage");
                 abtID = rs.getInt("ABTID");
+                infoStreamer.send(String.format("Sie sind angemeldet als %s.", name));
             }
             else {
                 success = false;
@@ -69,7 +71,7 @@ public class FunctionalityHandlerImpl extends UnicastRemoteObject implements Fun
 
     @Override
     public void logout() throws RemoteException {
-        //TODO: Datenbankverbindung schließen
+        infoStreamer.close();
     }
 
     @Override
