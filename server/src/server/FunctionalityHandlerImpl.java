@@ -2,6 +2,8 @@ package server;
 
 import client.FunctionalityHandler;
 
+import javax.sql.rowset.CachedRowSet;
+import javax.sql.rowset.RowSetProvider;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.sql.*;
@@ -188,34 +190,30 @@ public class FunctionalityHandlerImpl extends UnicastRemoteObject implements Fun
                 ps.setInt(1,mitarbeiterId);
                 ps.setDate(2,begin);
                 ps.setDate(3,ende);
-                boolean worked = ps.execute();
-                if(worked){
-                    return "Urlaub wurde genehmigt!";
-                }
-                else
-                    return "Urlaub wurde aufgrund eines Fehlers nicht genehmigt";
+                ps.execute();
+                return "Urlaub wurde genehmigt!";
             }
             catch (Exception e){
                 e.printStackTrace();
             }
+            return "Urlaub wurde aufgrund eines Fehlers nicht genehmigt!";
 
         }
         else throw new RemoteException();
-
-        return null;
     }
 
     @Override
-    public ResultSet getNichtGenehmigteUrlaubsTage(int mitarbeiterId) throws RemoteException {
+    public CachedRowSet getNichtGenehmigteUrlaubsTage(int mitarbeiterId) throws RemoteException {
         if (client instanceof Abteilungsleiter) {
-            ResultSet set = null;
             sqlstatement = "SELECT * FROM Urlaub WHERE Urlaub.MitarbeiterID IN (Select mitarbeiter.MitarbeiterID from mitarbeiter where mitarbeiter.ABTID=? AND mitarbeiter.MitarbeiterID=?) AND urlaub.Genehmigt=0";
             try {
                 ps = connection.prepareStatement(sqlstatement);
                 ps.setInt(1, client.getAbtID());
                 ps.setInt(2, mitarbeiterId);
-                set = ps.executeQuery();
-                return set;
+                ResultSet set = ps.executeQuery();
+                CachedRowSet crset = RowSetProvider.newFactory().createCachedRowSet();
+                crset.populate(set);
+                return crset;
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -233,15 +231,13 @@ public class FunctionalityHandlerImpl extends UnicastRemoteObject implements Fun
                 ps.setInt(1, mitarbeiterId);
                 ps.setDate(2, begin);
                 ps.setDate(3, ende);
-                boolean worked = ps.execute();
-                if (worked) {
-                    return "Urlaubssatz wurde gelöscht";
-                } else
-                    return "Urlaubssatz wurde aufgrund eines Fehlers nicht gelöscht";
+                ps.execute();
+                return "Urlaubssatz wurde gelöscht";
 
             } catch (Exception e) {
                 e.printStackTrace();
             }
+            return "Urlaubssatz wurde aufgrund eines Fehlers nicht gelöscht";
         }
         return null;
     }

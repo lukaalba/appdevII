@@ -1,5 +1,6 @@
 package client;
 
+import javax.sql.rowset.CachedRowSet;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -8,7 +9,6 @@ import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.sql.Date;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class Main {
@@ -77,19 +77,19 @@ public class Main {
                             System.out.println("Urlaub genehmigen gewählt!");
                             System.out.println("Bitte geben Sie die Mitarbeiternummer der Person ein, dessen Urlaub sie genehmigen wollen");
                             int personalnr = Integer.parseInt(input.readLine());
-                            ResultSet rset = stub.getNichtGenehmigteUrlaubsTage(personalnr);
+                            CachedRowSet crset = stub.getNichtGenehmigteUrlaubsTage(personalnr);
                             boolean running= true;
-                            if (rset!= null){
-                                while (rset.next() && running){
-                                    System.out.println("Der Mitarbeiter möchte von "+rset.getDate("Beginn")+" bis "+rset.getDate("Ende")+" freinehmen");
+                            if (crset!= null){
+                                while (crset.next() && running){
+                                    System.out.println("Der Mitarbeiter möchte von "+crset.getDate("Beginn")+" bis "+crset.getDate("Ende")+" freinehmen");
                                     System.out.println("Möchten Sie diesen genehmigen? (J/N/S). Drücken sie E u um die Abfrage zu verlassen!");
                                     String antwort = input.readLine();
                                     switch (antwort){
                                         case "J":
-                                            System.out.println(stub.urlaubGenehmigen(rset.getInt("MitarbeiterID"),rset.getDate("Beginn"),rset.getDate("Ende")));
+                                            System.out.println(stub.urlaubGenehmigen(crset.getInt("MitarbeiterID"),crset.getDate("Beginn"),crset.getDate("Ende")));
                                             break;
                                         case "N":
-                                            System.out.println(stub.urlaubLoeschen(rset.getInt("MitarbeiterID"),rset.getDate("Beginn"),rset.getDate("Ende")));
+                                            System.out.println(stub.urlaubLoeschen(crset.getInt("MitarbeiterID"),crset.getDate("Beginn"),crset.getDate("Ende")));
                                             break;
                                         case "S":
                                             break;
