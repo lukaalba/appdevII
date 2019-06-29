@@ -26,8 +26,8 @@ public class Main {
             boolean success = false;
 
             FunctionalityHandler stub = (FunctionalityHandler) Naming.lookup(String.format("rmi://%s:%d/stub", host, port));
-            stub.connect();
-            Thread infoStreamPrinter = new InfoStreamPrinter(host, port);
+            //stub.connect();
+            //Thread infoStreamPrinter = new InfoStreamPrinter(host, port);
 
             BufferedReader input = new BufferedReader(new InputStreamReader(System.in));
 
@@ -82,8 +82,8 @@ public class Main {
                             if (crset!= null){
                                 while (crset.next() && running){
                                     System.out.println("Der Mitarbeiter möchte von "+crset.getDate("Beginn")+" bis "+crset.getDate("Ende")+" freinehmen");
-                                    System.out.println("Möchten Sie diesen genehmigen? (J/N/S). Drücken sie E u um die Abfrage zu verlassen!");
-                                    String antwort = input.readLine();
+                                    System.out.println("Möchten Sie diesen genehmigen? (J/N/S). Drücken sie E um die Abfrage zu verlassen!");
+                                    String antwort = input.readLine().toUpperCase();
                                     switch (antwort){
                                         case "J":
                                             System.out.println(stub.urlaubGenehmigen(crset.getInt("MitarbeiterID"),crset.getDate("Beginn"),crset.getDate("Ende")));

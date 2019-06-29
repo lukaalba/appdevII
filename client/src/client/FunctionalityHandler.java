@@ -15,5 +15,5 @@ public interface FunctionalityHandler extends Remote {
     String urlaubGenehmigen(int mitarbeiterId, Date begin, Date ende) throws RemoteException;
     CachedRowSet getNichtGenehmigteUrlaubsTage(int mitarbeiterId) throws RemoteException;
     String urlaubLoeschen(int mitarbeiterId, Date begin, Date ende) throws RemoteException;
-    void connect();
+    void connect() throws RemoteException;
 }

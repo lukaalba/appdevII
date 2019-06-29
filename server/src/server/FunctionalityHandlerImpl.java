@@ -20,7 +20,7 @@ public class FunctionalityHandlerImpl extends UnicastRemoteObject implements Fun
     FunctionalityHandlerImpl() throws RemoteException { }
 
     @Override
-    public void connect() {
+    public void connect() throws RemoteException {
         infoStreamer = new InfoStreamer(1666);
     }
 
@@ -38,13 +38,12 @@ public class FunctionalityHandlerImpl extends UnicastRemoteObject implements Fun
             ps.setInt(1, mitarbeiterID);
             ps.setString(2, pwHash);
             ResultSet rs = ps.executeQuery();
-            System.out.println("Nach der Query");
             if (rs.next()) {
                 success = true;
                 name = String.format("%s %s", rs.getString("Vorname"), rs.getString("Nachname"));
                 anzUrlaubstage = rs.getInt("GesamtUrlaubstage");
                 abtID = rs.getInt("ABTID");
-                infoStreamer.send(String.format("Sie sind angemeldet als %s.", name));
+                //infoStreamer.send(String.format("Sie sind angemeldet als %s.", name));
             }
             else {
                 success = false;
@@ -184,7 +183,7 @@ public class FunctionalityHandlerImpl extends UnicastRemoteObject implements Fun
     public String urlaubGenehmigen(int mitarbeiterId, Date begin, Date ende) throws RemoteException {
         if (client instanceof Abteilungsleiter) {
             //TODO: Auf der Datenbank den entsprechenden Urlaub als genehmigt markieren
-            sqlstatement="UPDATE urlaub SET Genehmigt=1 WHERE MitarbeiterID=? AND Beginn=? AND Ende=?";
+            sqlstatement="UPDATE Urlaub SET Genehmigt=1 WHERE MitarbeiterID=? AND Beginn=? AND Ende=?";
             try {
                 ps = connection.prepareStatement(sqlstatement);
                 ps.setInt(1,mitarbeiterId);
@@ -199,13 +198,13 @@ public class FunctionalityHandlerImpl extends UnicastRemoteObject implements Fun
             return "Urlaub wurde aufgrund eines Fehlers nicht genehmigt!";
 
         }
-        else throw new RemoteException();
+        else return "Der angemeldete Benutzer verfügt über keine ausreichenden Berechtigungen";
     }
 
     @Override
     public CachedRowSet getNichtGenehmigteUrlaubsTage(int mitarbeiterId) throws RemoteException {
         if (client instanceof Abteilungsleiter) {
-            sqlstatement = "SELECT * FROM Urlaub WHERE Urlaub.MitarbeiterID IN (Select mitarbeiter.MitarbeiterID from mitarbeiter where mitarbeiter.ABTID=? AND mitarbeiter.MitarbeiterID=?) AND urlaub.Genehmigt=0";
+            sqlstatement = "SELECT * FROM Urlaub WHERE Urlaub.MitarbeiterID IN (Select Mitarbeiter.MitarbeiterID from Mitarbeiter where Mitarbeiter.ABTID=? AND Mitarbeiter.MitarbeiterID=?) AND Urlaub.Genehmigt=0";
             try {
                 ps = connection.prepareStatement(sqlstatement);
                 ps.setInt(1, client.getAbtID());
@@ -225,7 +224,7 @@ public class FunctionalityHandlerImpl extends UnicastRemoteObject implements Fun
     @Override
     public String urlaubLoeschen(int mitarbeiterId, Date begin, Date ende) throws RemoteException {
         if (client instanceof Abteilungsleiter) {
-            sqlstatement = "DELETE FROM urlaub WHERE MitarbeiterID=? AND Beginn=? AND ENDE=?";
+            sqlstatement = "DELETE FROM Urlaub WHERE MitarbeiterID=? AND Beginn=? AND ENDE=?";
             try {
                 ps = connection.prepareStatement(sqlstatement);
                 ps.setInt(1, mitarbeiterId);

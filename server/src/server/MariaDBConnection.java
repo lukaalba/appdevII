@@ -12,9 +12,7 @@ public class MariaDBConnection {
     public Connection dbconn() {
         try {
             Class.forName("org.mariadb.jdbc.Driver");
-            System.out.println("Vor Connection");
             conn = DriverManager.getConnection("jdbc:mariadb://localhost:3306/urlaubsplan", "root", "");
-            System.out.println("Nach Connection");
 
             return conn;
         } catch (Exception e) {
